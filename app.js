@@ -29,7 +29,8 @@ function invalidate() {
   resolutions = {};
   $('results').hidden = true;
   $('merge').disabled = false;
-  status('Sources changed. Compare again to create fresh resolutions.');
+  $('save-session').disabled = true;
+  status('Sources changed. Compare to update.');
 }
 function sync() {
   for (const key of ['base', 'ours', 'theirs']) {
@@ -39,20 +40,17 @@ function sync() {
 }
 function metadata(key) {
   const text = sources[key];
+  editors[key].numbers.textContent = Array.from(
+    { length: editors[key].input.value.split('\n').length },
+    (_, i) => i + 1,
+  ).join('\n');
   editors[key].meta.textContent =
-    `${text.length.toLocaleString()} characters · ${endingStyle(text)} endings${text && !/[\r\n]$/.test(text) ? ' · no final newline' : ''}${endingStyle(text) === 'mixed' ? ' · editing normalizes to LF' : ''}`;
+    `${text.length.toLocaleString()} chars · ${endingStyle(text)}${text && !/[\r\n]$/.test(text) ? ' · no final newline' : ''}${endingStyle(text) === 'mixed' ? ' · editing normalizes to LF' : ''}`;
 }
 for (const key of ['base', 'ours', 'theirs']) {
   const section = node('div', undefined, 'source'),
     top = node('div', undefined, 'source-top'),
-    title = node(
-      'label',
-      key === 'base'
-        ? 'Base / common ancestor'
-        : key === 'ours'
-          ? 'Ours / branch A'
-          : 'Theirs / branch B',
-    );
+    title = node('label', key === 'base' ? 'Base' : key === 'ours' ? 'Ours' : 'Theirs');
   title.htmlFor = key;
   const upload = node('label', 'Load text', 'import'),
     file = node('input');
@@ -66,7 +64,17 @@ for (const key of ['base', 'ours', 'theirs']) {
   input.spellcheck = false;
   input.maxLength = 100000;
   const meta = node('p', undefined, 'meta');
-  editors[key] = { input, meta };
+  const numbers = node('pre', '', 'line-numbers'),
+    code = node('div', undefined, 'code-editor');
+  numbers.setAttribute('aria-hidden', 'true');
+  input.wrap = 'off';
+  code.append(numbers, input);
+  section.dataset.source = key;
+  section.dataset.active = key === 'base';
+  input.addEventListener('scroll', () => {
+    numbers.scrollTop = input.scrollTop;
+  });
+  editors[key] = { input, meta, numbers };
   input.addEventListener('input', () => {
     sources[key] = editedText(sources[key], input.value);
     invalidate();
@@ -92,7 +100,7 @@ for (const key of ['base', 'ours', 'theirs']) {
       file.value = '';
     }
   });
-  section.append(top, input, meta);
+  section.append(top, code, meta);
   $('sources').append(section);
 }
 function download(name, text, type = 'text/plain;charset=utf-8') {
@@ -110,9 +118,8 @@ function output() {
     $('remaining').textContent = merged.unresolved
       ? `${merged.unresolved} unresolved · markers included`
       : 'All changes resolved';
-    $('save').textContent = merged.unresolved
-      ? 'Download with conflict markers'
-      : 'Download merged text';
+    $('save').textContent = merged.unresolved ? 'Download with markers ↓' : 'Download text ↓';
+    $('remaining').dataset.unresolved = merged.unresolved > 0;
     $('save').disabled = false;
     $('save-session').disabled = false;
   } catch (e) {
@@ -190,7 +197,17 @@ function render() {
       output();
     });
     card.append(columns, label, manual);
+    card.dataset.resolved = select.value !== 'unresolved';
+    select.addEventListener(
+      'change',
+      () => (card.dataset.resolved = select.value !== 'unresolved'),
+    );
     fragment.append(card);
+  }
+  if (!result.conflicts.length) {
+    const empty = node('div', undefined, 'empty-conflicts');
+    empty.append(node('span', '✓'), node('p', 'No conflicts'));
+    fragment.append(empty);
   }
   $('conflicts').replaceChildren(fragment);
   $('stats').textContent =
@@ -222,9 +239,7 @@ function compute(session = { sources, resolutions: {} }, imported = false) {
       sync();
     }
     render();
-    status(
-      `Comparison complete · ${data.milliseconds.toFixed(1)} ms. Source edits reset conflict resolutions.`,
-    );
+    status(`Compared in ${data.milliseconds.toFixed(1)} ms`);
   };
   current.onerror = () => {
     if (ticket !== revision) return;
@@ -268,5 +283,33 @@ $('session').addEventListener('change', async () => {
     $('session').value = '';
   }
 });
+for (const b of document.querySelectorAll('[data-source]'))
+  b.onclick = () => {
+    for (const t of document.querySelectorAll('.source-tabs button'))
+      t.setAttribute('aria-pressed', t === b);
+    for (const s of document.querySelectorAll('.source'))
+      s.dataset.active = s.dataset.source === b.dataset.source;
+  };
+function outputView(changes) {
+  for (const [name, active] of [
+    ['merged', !changes],
+    ['changes', changes],
+  ]) {
+    $(name + '-pane').hidden = !active;
+    $(name + '-tab').setAttribute('aria-selected', active);
+    $(name + '-tab').tabIndex = active ? 0 : -1;
+  }
+}
+$('merged-tab').onclick = () => outputView(false);
+$('changes-tab').onclick = () => outputView(true);
+for (const id of ['merged-tab', 'changes-tab'])
+  $(id).onkeydown = (e) => {
+    if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+      e.preventDefault();
+      const changes = e.key === 'End' || (e.key !== 'Home' && id === 'merged-tab');
+      outputView(changes);
+      $(changes ? 'changes-tab' : 'merged-tab').focus();
+    }
+  };
 sync();
 compute();

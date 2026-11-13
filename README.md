@@ -4,6 +4,10 @@ A dependency-free three-way text merge workbench. Compare a common ancestor with
 
 ![Merge workbench](docs/workbench.png)
 
+## Interface
+
+Three source editors share the upper workspace, with line-number gutters and separate colors for Ours and Theirs. Conflicts appear beside the merged document below. The output tabs switch between merged text and line changes; Left/Right keys move between tabs. Mobile source tabs show one document at a time. Editing a source clears stale resolutions and disables session export until the next comparison.
+
 ## Run
 
 Requires Python 3.10+ to serve local assets. No installation or build step:
@@ -50,3 +54,5 @@ Browser validation covers independent merges, overlapping changes, branch select
 ## References
 
 Conceptual background: [GNU diff3 merging](https://www.gnu.org/software/diffutils/manual/html_node/diff3-Merging.html) and [git merge-file](https://git-scm.com/docs/git-merge-file.html). The implementation here is independent and intentionally has its own documented conflict policy.
+
+The editor redesign was checked at desktop and 390-pixel widths, including automatic merges, conflict selection, manual resolution, keyboard output tabs, diff direction, source invalidation, and mobile source switching. All twelve merge-engine tests pass.

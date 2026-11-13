@@ -8,70 +8,76 @@
   </head>
   <body>
     <header>
-      <a href="#">m / m</a><span>DEVELOPER TOOLS · 017</span
-      ><label class="import">Open session<input id="session" type="file" accept=".json" /></label>
+      <h1><span aria-hidden="true">⋈</span> Merge Margin</h1>
+      <div>
+        <label class="import">Open session<input id="session" type="file" accept=".json" /></label
+        ><button id="save-session" disabled>Save session</button>
+      </div>
     </header>
     <main>
-      <section class="intro">
-        <p class="eyebrow">A LITTLE ROOM TO RECONCILE</p>
-        <h1>Different branches.<br />Common ground.</h1>
-        <p>
-          Compare three versions. Keep independent changes.<br />Give the disagreements your
-          attention.
-        </p>
-      </section>
-      <section aria-label="Source documents">
-        <div class="toolbar">
-          <h2>01 / The sources</h2>
-          <label
-            >Example
-            <select id="example">
-              <option value="independent">Independent edits</option>
-              <option value="conflict">Overlapping changes</option>
-              <option value="insertion">Competing insertions</option>
-            </select></label
-          >
-        </div>
-        <div id="sources" class="columns"></div>
-        <div class="toolbar">
-          <p class="muted">800 lines · 100,000 characters per source · processed in your browser</p>
-          <button id="merge" class="primary">Compare & merge ↗</button>
-        </div>
-      </section>
-      <p id="status" role="status" aria-live="polite"></p>
+      <div class="command-bar">
+        <label
+          >Example
+          <select id="example">
+            <option value="independent">Independent edits</option>
+            <option value="conflict">Overlapping changes</option>
+            <option value="insertion">Competing insertions</option>
+          </select></label
+        ><button id="merge" class="primary">Compare</button>
+      </div>
+      <div class="source-tabs" aria-label="Visible source">
+        <button data-source="base" aria-pressed="true">Base</button
+        ><button data-source="ours" aria-pressed="false">Ours</button
+        ><button data-source="theirs" aria-pressed="false">Theirs</button>
+      </div>
+      <section aria-label="Source documents"><div id="sources" class="columns"></div></section>
+      <div class="status-strip">
+        <p id="status" role="status" aria-live="polite"></p>
+        <span>UTF-8 · 800 lines max.</span>
+      </div>
       <section id="results" hidden>
-        <div class="toolbar">
-          <h2>02 / Common ground</h2>
-          <span id="stats"></span>
+        <aside class="resolution-pane">
+          <div class="pane-heading">
+            <h2>Conflicts</h2>
+            <span id="stats"></span>
+          </div>
+          <div id="conflicts"></div>
+        </aside>
+        <div class="output-pane">
+          <div class="pane-heading">
+            <div class="result-tabs" role="tablist" aria-label="Output views">
+              <button id="merged-tab" role="tab" aria-selected="true" aria-controls="merged-pane">
+                Merged</button
+              ><button
+                id="changes-tab"
+                role="tab"
+                aria-selected="false"
+                aria-controls="changes-pane"
+                tabindex="-1"
+              >
+                Line changes
+              </button>
+            </div>
+            <button id="save">Download text ↓</button>
+          </div>
+          <div id="merged-pane" role="tabpanel" aria-labelledby="merged-tab">
+            <div class="output-status"><span id="remaining"></span></div>
+            <pre id="output" tabindex="0" aria-label="Merged document"></pre>
+          </div>
+          <div id="changes-pane" role="tabpanel" aria-labelledby="changes-tab" hidden>
+            <div class="diff-options">
+              <label
+                >Base →
+                <select id="side">
+                  <option value="ours">Ours</option>
+                  <option value="theirs">Theirs</option>
+                </select></label
+              ><span>− Removed / + Inserted</span>
+            </div>
+            <div id="diff" class="diff" tabindex="0" aria-label="Line changes"></div>
+          </div>
         </div>
-        <div id="conflicts"></div>
-        <div class="output-heading">
-          <h3>Merged document</h3>
-          <span id="remaining"></span>
-        </div>
-        <pre id="output" tabindex="0" aria-label="Merged document"></pre>
-        <div class="toolbar">
-          <button id="save">Download merged text</button
-          ><button id="save-session">Save session</button>
-        </div>
-        <details>
-          <summary>Inspect line changes</summary>
-          <label
-            >Compare base with
-            <select id="side">
-              <option value="ours">Ours</option>
-              <option value="theirs">Theirs</option>
-            </select></label
-          >
-          <p class="muted">Line endings are part of the comparison. − removed · + inserted</p>
-          <div id="diff" class="diff" tabindex="0" aria-label="Line changes"></div>
-        </details>
       </section>
-      <footer>
-        Exact-line comparison. Deliberate decisions.<span
-          >No uploads. No accounts. No dependencies.</span
-        >
-      </footer>
     </main>
     <script type="module" src="app.js"></script>
   </body>
